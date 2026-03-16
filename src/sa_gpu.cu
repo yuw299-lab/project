@@ -8,11 +8,9 @@ struct SuffixPair {
     int index;
 };
 
-// Kernel: Initial rank assignment based on character values
 __global__ void initial_rank_kernel(const char* input, int* ranks, int n) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i < n) {
-        // Use the ASCII value as the initial rank
+    int stride = blockDim.x * gridDim.x;
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += stride) {
         ranks[i] = (unsigned char)input[i];
     }
 }
@@ -30,35 +28,37 @@ __global__ void get_bwt_kernel(const char* input, const int* sa, char* bwt, int 
     }
 }
 
+
 __global__ void build_keys_kernel(int* ranks, int n, int k, uint64_t* keys, int* indices) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i < n) {
+    int stride = blockDim.x * gridDim.x;
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += stride) {
         uint64_t high = (uint64_t)ranks[i];
         uint64_t low = (i + k < n) ? (uint64_t)(ranks[i + k] + 1) : 0;
-        
         keys[i] = (high << 32) | low;
         indices[i] = i;
     }
 }
 // Kernel 2: Parallel flag generation using parallel arrays
 __global__ void mark_unique_ranks(uint64_t* sorted_keys, int* flags, int n) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i > 0 && i < n) {
-        flags[i] = (sorted_keys[i] != sorted_keys[i - 1]) ? 1 : 0;
-    } else if (i == 0) {
-        flags[i] = 0; 
+    int stride = blockDim.x * gridDim.x;
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += stride) {
+        if (i > 0) {
+            flags[i] = (sorted_keys[i] != sorted_keys[i - 1]) ? 1 : 0;
+        } else {
+            flags[i] = 0; // Rank 0 unique
+        }
     }
 }
 
 // Kernel 3: Re-assign ranks using parallel arrays
+
 __global__ void update_ranks_kernel(int* sorted_indices, int* scanned_flags, int* new_ranks, int n) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i < n) {
+    int stride = blockDim.x * gridDim.x;
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += stride) {
         int original_idx = sorted_indices[i];
         new_ranks[original_idx] = scanned_flags[i];
     }
 }
-
 void run_gpu_sa_construction(char* d_input, int* d_sa, int n) {
     int *d_ranks, *d_flags, *d_indices, *d_indices_out;
     uint64_t *d_keys, *d_keys_out;
@@ -71,7 +71,8 @@ void run_gpu_sa_construction(char* d_input, int* d_sa, int n) {
     cudaMalloc(&d_indices_out, n * sizeof(int));
 
     int threads = 256;
-    int blocks = (n + threads - 1) / threads;
+    int blocks = 128;
+    
 
     initial_rank_kernel<<<blocks, threads>>>(d_input, d_ranks, n);
 
