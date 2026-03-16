@@ -16,6 +16,13 @@ Features: Includes optional BWT output generation and benchmarking tools.
 
 # To reproduce results
 
+
+Clone the repo 
+```
+git clone https://github.com/yuw299-lab/project.git
+
+```
+
 I use the same docker image as assignments to navigate through DSMLP
 
 ```
