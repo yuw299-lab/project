@@ -8,7 +8,7 @@ struct SuffixPair {
     int index;
 };
 
-// Kernel: Initial rank assignment based on character values [cite: 32]
+// Kernel: Initial rank assignment based on character values
 __global__ void initial_rank_kernel(const char* input, int* ranks, int n) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n) {
@@ -17,13 +17,13 @@ __global__ void initial_rank_kernel(const char* input, int* ranks, int n) {
     }
 }
 
-// Kernel: Generate BWT from the final Suffix Array [cite: 6, 13]
+// Kernel: Generate BWT from the final Suffix Array
 __global__ void get_bwt_kernel(const char* input, const int* sa, char* bwt, int n) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n) {
         int pos = sa[i];
         if (pos == 0) {
-            bwt[i] = '$'; // Sentinel for the start of the string [cite: 30]
+            bwt[i] = '$'; // Sentinel for the start of the string
         } else {
             bwt[i] = input[pos - 1];
         }
