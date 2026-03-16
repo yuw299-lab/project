@@ -29,4 +29,5 @@ I use the same docker image as assignments to navigate through DSMLP
 ssh yuw299@dsmlp-login.ucsd.edu /opt/launch-sh/bin/launch.sh -v a30 -c 8 -g 1 -m 8 -i yatisht/ece213-wi26:latest -f ./project/run-commands.sh
 ```
 
-smallIn.fa is a custom FASTA file to test the correctness by manually checking the output. The chr1_GL3835(18 - 20)_alt.fa can be used to measure performance, while chr22.fa.zip can be used to test large input. 
+smallIn.fa is a custom FASTA file to test the correctness by manually checking the output. 
+The chr1_GL3835(18 - 20)_alt.fa can be used to measure performance, while chr22.fa.zip can be used to test large input. 
