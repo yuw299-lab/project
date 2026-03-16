@@ -5,7 +5,7 @@
 #include <boost/program_options.hpp>
 #include "kseq.h"
 #include "zlib.h"
-#include "sa_gpu.cuh" // Your GPU SA implementation header
+#include "sa_gpu.cuh" 
 
 namespace po = boost::program_options;
 KSEQ_INIT(gzFile, gzread)
@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
     std::string inputFasta;
     std::string outputFile;
 
-    // 1. Parse Command Line Options [cite: 12]
+    // 1. Parse Command Line Options
     po::options_description desc("SA Construction Options");
     desc.add_options()
         ("input,i", po::value<std::string>(&inputFasta)->required(), "Input FASTA file")
@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     // Concatenate all sequences into one large string 
     while (kseq_read(seq) >= 0) {
         masterString += seq->seq.s;
-        masterString += "$"; // Sentinel for generalized SA [cite: 30, 31]
+        masterString += "$"; // Sentinel for generalized SA
     }
     kseq_destroy(seq);
     gzclose(fp);
@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     size_t n = masterString.length();
     std::cout << "Total concatenated length: " << n << " characters." << std::endl;
 
-    // 3. GPU Memory Allocation & Transfer [cite: 32]
+    // 3. GPU Memory Allocation & Transfer
     int* d_sa;
     char* d_input;
     cudaMalloc(&d_input, n * sizeof(char));
@@ -54,8 +54,7 @@ int main(int argc, char** argv) {
 
     cudaMemcpy(d_input, masterString.c_str(), n * sizeof(char), cudaMemcpyHostToDevice);
 
-    // 4. Call Iterative SA Construction on GPU [cite: 33, 34]
-    // This calls your prefix-doubling kernels and CUB radix sorts
+    // 4. Call Iterative SA Construction on GPU
     run_gpu_sa_construction(d_input, d_sa, n);
 
     // 5. Transfer Result Back to CPU 
